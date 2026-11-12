@@ -108,6 +108,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Zoeken"
   }
 }</script>
+<link href="site_libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+
+<script src="site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+
+<link href="site_libs/leaflet-1.3.1/leaflet.css" rel="stylesheet">
+
+<script src="site_libs/leaflet-1.3.1/leaflet.js"></script>
+
+<link href="site_libs/leafletfix-1.0.0/leafletfix.css" rel="stylesheet">
+
+<script src="site_libs/proj4-2.6.2/proj4.min.js"></script>
+
+<script src="site_libs/Proj4Leaflet-1.0.1/proj4leaflet.js"></script>
+
+<link href="site_libs/rstudio_leaflet-1.3.1/rstudio_leaflet.css" rel="stylesheet">
+
+<script src="site_libs/leaflet-binding-2.2.3/leaflet.js"></script>
+
+<script src="site_libs/leaflet-providers-3.0.0/leaflet-providers.js"></script>
+
+<script src="site_libs/leaflet-providers-plugin-2.2.3/leaflet-providers-plugin.js"></script>
+
 
 
 </head>
@@ -161,8 +185,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Op deze pagina</h2>
    
   <ul>
-  <li><a href="#zo-werk-je" id="toc-zo-werk-je" class="nav-link active" data-scroll-target="#zo-werk-je">Zo werk je</a></li>
+  <li><a href="#locaties" id="toc-locaties" class="nav-link active" data-scroll-target="#locaties">Locaties</a></li>
+  <li><a href="#zo-werk-je" id="toc-zo-werk-je" class="nav-link" data-scroll-target="#zo-werk-je">Zo werk je</a></li>
   <li><a href="#de-data" id="toc-de-data" class="nav-link" data-scroll-target="#de-data">De data</a></li>
+  <li><a href="#meer-leren" id="toc-meer-leren" class="nav-link" data-scroll-target="#meer-leren">Meer leren</a></li>
   </ul>
 </nav>
     </div>
@@ -189,7 +215,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>We verwerken de puntenwolken van de drone (DJI Matrice 350 RTK met Zenmuse L2) met het R-pakket <strong>lidR</strong>. Je hoeft geen R te kennen: alle code staat klaar. Alle functies komen uit lidR of <strong>terra</strong> (kaarten), zodat je na de cursus met dezelfde code verder kunt.</p>
+<p>Een <strong>eerste kennismaking</strong> met drone-LiDAR in mangroves. We verwerken de puntenwolken van de drone (DJI Matrice 350 RTK met Zenmuse L2) met het R-pakket <strong>lidR</strong>. Je hoeft geen R te kennen: alle code staat klaar. Alle functies komen uit lidR of <strong>terra</strong> (kaarten), zodat je na de cursus met dezelfde code verder kunt.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -204,7 +230,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>1 · Bekijken</td>
-<td>De puntenwolk inlezen en in 3D bekijken</td>
+<td>De puntenwolk inlezen, op een kaart situeren en in 3D bekijken</td>
 </tr>
 <tr class="even">
 <td>2 · Analyseren</td>
@@ -216,6 +242,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 </tbody>
 </table>
+<section id="locaties" class="level2">
+<h2 class="anchored" data-anchor-id="locaties">Locaties</h2>
+<p>Geel: de locaties die we met de drone gevlogen hebben. Oranje: de transecten in Coronie (2024) met veldplots, voor deel 3. Klik op een vlak voor meer uitleg.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(leaflet)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>locaties <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"kaart/locaties.geojson"</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">leaflet</span>(locaties) <span class="sc">|&gt;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">addProviderTiles</span>(<span class="st">"Esri.WorldImagery"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">addPolygons</span>(<span class="at">color =</span> <span class="fu">ifelse</span>(locaties<span class="sc">$</span>soort <span class="sc">==</span> <span class="st">"vlucht"</span>, <span class="st">"yellow"</span>, <span class="st">"orange"</span>),</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>              <span class="at">weight =</span> <span class="dv">2</span>, <span class="at">fillOpacity =</span> <span class="fl">0.15</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>              <span class="at">label =</span> locaties<span class="sc">$</span>naam, <span class="at">popup =</span> locaties<span class="sc">$</span>beschrijving)</span></code></pre></div><button title="Kopieer naar klembord" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="leaflet html-widget html-fill-item" id="htmlwidget-361b661a23e0b995d57a" style="width:100%;height:361px;"></div>
+<script type="application/json" data-for="htmlwidget-361b661a23e0b995d57a">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addProviderTiles","args":["Esri.WorldImagery",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addPolygons","args":[[[[{"lng":[-55.922659,-55.921395,-55.921035,-55.920584,-55.920404,-55.920133,-55.919322,-55.918691,-55.918691,-55.91824,-55.918151,-55.917699,-55.917429,-55.91743,-55.917701,-55.917612,-55.917884,-55.918607,-55.918789,-55.922861,-55.924758,-55.925659,-55.926111,-55.92611,-55.926742,-55.926922,-55.927193,-55.927553,-55.927824,-55.928094,-55.928635,-55.928633,-55.927819,-55.92628,-55.925285,-55.925194,-55.923475,-55.923294,-55.923382,-55.923202,-55.923201,-55.922659],"lat":[5.792226,5.791861,5.791318,5.791317,5.790774,5.790774,5.789777,5.789414,5.789143,5.788961,5.788599,5.788417,5.788055,5.787603,5.787332,5.78688,5.786337,5.785796,5.785344,5.780829,5.780652,5.78183,5.781831,5.782102,5.782374,5.782737,5.782737,5.78328,5.783281,5.783824,5.784006,5.785182,5.785723,5.78771,5.788613,5.788974,5.790689,5.79096,5.791865,5.791865,5.792136,5.792226]}]],[[{"lng":[-55.144785,-55.144514,-55.144064,-55.143161,-55.142891,-55.142258,-55.141629,-55.141755,-55.142481,-55.143023,-55.143926,-55.144376,-55.144464,-55.145185,-55.145184,-55.146086,-55.146716,-55.146624,-55.147254,-55.147252,-55.14689,-55.146797,-55.146598,-55.146776,-55.146142,-55.145419,-55.144785],"lat":[5.948805,5.948804,5.94835,5.948437,5.948256,5.948434,5.947528,5.936769,5.935777,5.935598,5.935782,5.936235,5.936778,5.937142,5.937594,5.937778,5.938504,5.938955,5.93959,5.940223,5.940493,5.941216,5.946821,5.947636,5.948176,5.948174,5.948805]}]],[[{"lng":[-56.280093,-56.278829,-56.277835,-56.278111,-56.278023,-56.278474,-56.278564,-56.278926,-56.279108,-56.27947,-56.279471,-56.279924,-56.280107,-56.280469,-56.280742,-56.281013,-56.281014,-56.281286,-56.281557,-56.281831,-56.282102,-56.282103,-56.282556,-56.282647,-56.28301,-56.283733,-56.284094,-56.284274,-56.284365,-56.284816,-56.284726,-56.285268,-56.285266,-56.285537,-56.285536,-56.285175,-56.285263,-56.284991,-56.28472,-56.284719,-56.284447,-56.284266,-56.283993,-56.283722,-56.283449,-56.283178,-56.283177,-56.282724,-56.282451,-56.28218,-56.282179,-56.281635,-56.281362,-56.281091,-56.280999,-56.280818,-56.280547,-56.280546,-56.280094,-56.280093],"lat":[5.886958,5.886956,5.886593,5.883156,5.881528,5.881528,5.8818,5.881529,5.880082,5.879992,5.878816,5.877912,5.876555,5.876013,5.874385,5.874204,5.873481,5.872486,5.872306,5.870587,5.870497,5.869593,5.868598,5.867603,5.86679,5.866429,5.86652,5.866972,5.866791,5.866792,5.867154,5.867154,5.868511,5.868512,5.868873,5.868782,5.87032,5.871134,5.871315,5.872129,5.873033,5.873033,5.874661,5.874841,5.876469,5.87665,5.877464,5.878458,5.879996,5.880176,5.8809,5.882075,5.883612,5.883793,5.884878,5.885421,5.885511,5.886235,5.886686,5.886958]}]],[[{"lng":[-56.050919,-56.050287,-56.050197,-56.048662,-56.048121,-56.048122,-56.048938,-56.049209,-56.049301,-56.05057,-56.051022,-56.051204,-56.051475,-56.051476,-56.05202,-56.052022,-56.053473,-56.053744,-56.053745,-56.054558,-56.056724,-56.056812,-56.056359,-56.056178,-56.055815,-56.051281,-56.050919],"lat":[5.835691,5.83569,5.835509,5.835054,5.834601,5.833967,5.83225,5.83216,5.831346,5.828454,5.828183,5.827641,5.827641,5.826918,5.825833,5.824386,5.820951,5.820861,5.820138,5.819868,5.821047,5.822223,5.823308,5.823308,5.824573,5.835239,5.835691]}]]],null,null,{"interactive":true,"className":"","stroke":true,"color":["yellow","yellow","orange","orange"],"weight":2,"opacity":0.5,"fill":true,"fillColor":["yellow","yellow","orange","orange"],"fillOpacity":0.15,"smoothFactor":1,"noClip":false},["Dronevlucht 10 november 2026 (Zenmuse L2)","Dronevlucht november 2026 (Zenmuse L2)","Coronie, september 2024, 20 veldplots","Coronie, september 2024, 13 veldplots"],null,["SU6","SU2","Transect T1 (Perseverance)","Transect T2 (Jenny)"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[5.780652,5.948805],"lng":[-56.285537,-55.141629]}},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
 <section id="zo-werk-je" class="level2">
 <h2 class="anchored" data-anchor-id="zo-werk-je">Zo werk je</h2>
 <p>Rechtsboven elk grijs codeblok staan twee knopjes:</p>
@@ -273,7 +319,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <p>De drone mat honderden punten per m². Dat is te zwaar voor een laptop, daarom werken we met uitgedunde versies. Werk in deel 1 en 2 met de locatie die je zelf bezocht hebt: verander bovenaan de bestandsnamen.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">list.files</span>(<span class="st">"data"</span>)</span></code></pre></div><button title="Kopieer naar klembord" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">list.files</span>(<span class="st">"data"</span>)</span></code></pre></div><button title="Kopieer naar klembord" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Coronie_T1_20pts.laz"            "Coronie_T2_20pts.laz"           
 [3] "Coronie2024_field_plot_data.csv" "SU6_20pts.laz"                  
@@ -281,6 +327,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 [7] "SU6_P3_100pts.laz"              </code></pre>
 </div>
 </div>
+</section>
+<section id="meer-leren" class="level2">
+<h2 class="anchored" data-anchor-id="meer-leren">Meer leren</h2>
+<ul>
+<li><a href="https://r-lidar.github.io/lidRbook/">The lidR book</a>: de volledige handleiding van lidR</li>
+<li><a href="https://tgoodbody.github.io/lidRtutorial/">lidR-workshop (Goodbody &amp; Roussel)</a> en <a href="https://liamirwin.github.io/SL25_lidRtutorial/">SilviLaser 2025-workshop</a></li>
+<li><a href="https://enterprise.dji.com/zenmuse-l2/video">Zenmuse L2 – officiële tutorials (DJI)</a> en <a href="https://www.youtube.com/watch?v=Bg-FKqE5C0U">DJI Terra voor LiDAR (video)</a></li>
+<li><a href="https://www.cloudcompare.org">CloudCompare</a>: puntenwolken bekijken zonder R</li>
+</ul>
 
 
 </section>

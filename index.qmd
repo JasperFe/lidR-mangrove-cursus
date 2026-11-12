@@ -4,13 +4,30 @@ subtitle: "Drone-LiDAR verwerken met lidR"
 editor: visual
 ---
 
-We verwerken de puntenwolken van de drone (DJI Matrice 350 RTK met Zenmuse L2) met het R-pakket **lidR**. Je hoeft geen R te kennen: alle code staat klaar. Alle functies komen uit lidR of **terra** (kaarten), zodat je na de cursus met dezelfde code verder kunt.
+Een **eerste kennismaking** met drone-LiDAR in mangroves. We verwerken de puntenwolken van de drone (DJI Matrice 350 RTK met Zenmuse L2) met het R-pakket **lidR**. Je hoeft geen R te kennen: alle code staat klaar. Alle functies komen uit lidR of **terra** (kaarten), zodat je na de cursus met dezelfde code verder kunt.
 
 | Deel | Wat je doet |
 |------------------------------------|------------------------------------|
-| 1 · Bekijken | De puntenwolk inlezen en in 3D bekijken |
+| 1 · Bekijken | De puntenwolk inlezen, op een kaart situeren en in 3D bekijken |
 | 2 · Analyseren | Terrein, kronendak, kenmerken en bomen uit de puntenwolk halen |
 | 3 · Biomassa | Met veldplots een biomassakaart maken |
+
+## Locaties
+
+Geel: de locaties die we met de drone gevlogen hebben. Oranje: de transecten in Coronie (2024) met veldplots, voor deel 3. Klik op een vlak voor meer uitleg.
+
+```{r}
+library(leaflet)
+library(sf)
+
+locaties <- st_read("kaart/locaties.geojson", quiet = TRUE)
+
+leaflet(locaties) |>
+  addProviderTiles("Esri.WorldImagery") |>
+  addPolygons(color = ifelse(locaties$soort == "vlucht", "yellow", "orange"),
+              weight = 2, fillOpacity = 0.15,
+              label = locaties$naam, popup = locaties$beschrijving)
+```
 
 ## Zo werk je
 
@@ -42,3 +59,10 @@ De drone mat honderden punten per m². Dat is te zwaar voor een laptop, daarom w
 ```{r}
 list.files("data")
 ```
+
+## Meer leren
+
+-   [The lidR book](https://r-lidar.github.io/lidRbook/): de volledige handleiding van lidR
+-   [lidR-workshop (Goodbody & Roussel)](https://tgoodbody.github.io/lidRtutorial/) en [SilviLaser 2025-workshop](https://liamirwin.github.io/SL25_lidRtutorial/)
+-   [Zenmuse L2 – officiële tutorials (DJI)](https://enterprise.dji.com/zenmuse-l2/video) en [DJI Terra voor LiDAR (video)](https://www.youtube.com/watch?v=Bg-FKqE5C0U)
+-   [CloudCompare](https://www.cloudcompare.org): puntenwolken bekijken zonder R

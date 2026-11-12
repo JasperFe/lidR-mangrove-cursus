@@ -74,7 +74,14 @@
     "href": "index.html",
     "title": "Welkom",
     "section": "",
-    "text": "We verwerken de puntenwolken van de drone (DJI Matrice 350 RTK met Zenmuse L2) met het R-pakket lidR. Je hoeft geen R te kennen: alle code staat klaar. Alle functies komen uit lidR of terra (kaarten), zodat je na de cursus met dezelfde code verder kunt."
+    "text": "Een eerste kennismaking met drone-LiDAR in mangroves. We verwerken de puntenwolken van de drone (DJI Matrice 350 RTK met Zenmuse L2) met het R-pakket lidR. Je hoeft geen R te kennen: alle code staat klaar. Alle functies komen uit lidR of terra (kaarten), zodat je na de cursus met dezelfde code verder kunt."
+  },
+  {
+    "objectID": "index.html#locaties",
+    "href": "index.html#locaties",
+    "title": "Welkom",
+    "section": "Locaties",
+    "text": "Locaties\nGeel: de locaties die we met de drone gevlogen hebben. Oranje: de transecten in Coronie (2024) met veldplots, voor deel 3. Klik op een vlak voor meer uitleg.\n\nlibrary(leaflet)\nlibrary(sf)\n\nlocaties &lt;- st_read(\"kaart/locaties.geojson\", quiet = TRUE)\n\nleaflet(locaties) |&gt;\n  addProviderTiles(\"Esri.WorldImagery\") |&gt;\n  addPolygons(color = ifelse(locaties$soort == \"vlucht\", \"yellow\", \"orange\"),\n              weight = 2, fillOpacity = 0.15,\n              label = locaties$naam, popup = locaties$beschrijving)"
   },
   {
     "objectID": "index.html#zo-werk-je",
@@ -89,6 +96,13 @@
     "title": "Welkom",
     "section": "De data",
     "text": "De data\nAlle bestanden staan in de map data:\n\n\n\n\n\n\n\nBestand\nInhoud\n\n\n\n\nSU6_20pts.laz\nHele locatie SU6, uitgedund tot 20 punten/m²\n\n\nSU6_P1_100pts.laz\nUitsnede 100 × 100 m: kreekmonding, bosrand en hoog kronendak\n\n\nSU6_P2_100pts.laz\nUitsnede: kreek met vertakkingen en een gat in het kronendak\n\n\nSU6_P3_100pts.laz\nUitsnede: open plekken naast hoog, gesloten kronendak\n\n\nSU2_…\nLocatie SU2, zelfde opbouw\n\n\nCoronie_T1_20pts.laz, Coronie_T2_20pts.laz\nTwee transecten in Coronie (2024), 20 punten/m²\n\n\nCoronie2024_field_plot_data.csv\nVeldplots van die transecten, met biomassa\n\n\n\nDe drone mat honderden punten per m². Dat is te zwaar voor een laptop, daarom werken we met uitgedunde versies. Werk in deel 1 en 2 met de locatie die je zelf bezocht hebt: verander bovenaan de bestandsnamen.\n\nlist.files(\"data\")\n\n[1] \"Coronie_T1_20pts.laz\"            \"Coronie_T2_20pts.laz\"           \n[3] \"Coronie2024_field_plot_data.csv\" \"SU6_20pts.laz\"                  \n[5] \"SU6_P1_100pts.laz\"               \"SU6_P2_100pts.laz\"              \n[7] \"SU6_P3_100pts.laz\""
+  },
+  {
+    "objectID": "index.html#meer-leren",
+    "href": "index.html#meer-leren",
+    "title": "Welkom",
+    "section": "Meer leren",
+    "text": "Meer leren\n\nThe lidR book: de volledige handleiding van lidR\nlidR-workshop (Goodbody & Roussel) en SilviLaser 2025-workshop\nZenmuse L2 – officiële tutorials (DJI) en DJI Terra voor LiDAR (video)\nCloudCompare: puntenwolken bekijken zonder R"
   },
   {
     "objectID": "02_lidr.html",
