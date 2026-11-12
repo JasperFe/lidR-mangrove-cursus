@@ -1,0 +1,15 @@
+{
+  "hash": "fbbc90b65e4c83cb0954f0c4d72e8256",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"Welkom\"\nsubtitle: \"Drone-LiDAR verwerken met lidR\"\neditor: visual\n---\n\nWe verwerken de puntenwolken van de drone (DJI Matrice 350 RTK met Zenmuse L2) met het R-pakket **lidR**. Je hoeft geen R te kennen: alle code staat klaar. Alle functies komen uit lidR of **terra** (kaarten), zodat je na de cursus met dezelfde code verder kunt.\n\n| Deel | Wat je doet |\n|------------------------------------|------------------------------------|\n| 1 · Bekijken | De puntenwolk inlezen en in 3D bekijken |\n| 2 · Analyseren | Terrein, kronendak, kenmerken en bomen uit de puntenwolk halen |\n| 3 · Biomassa | Met veldplots een biomassakaart maken |\n\n## Zo werk je\n\nRechtsboven elk grijs codeblok staan twee knopjes:\n\n-   **▶** voert het codeblok uit. Het resultaat verschijnt eronder.\n-   **▼ met een streepje** voert alle codeblokken erboven uit, handig als je iets overgeslagen hebt.\n\nWerk van boven naar onder. Loopt het mis: *Session → Restart R* en daarna **▼**.\n\n3D-figuren openen in een apart venster: draaien met de linkermuisknop, zoomen met het scrollwiel.\n\n## De data\n\nAlle bestanden staan in de map `data`:\n\n| Bestand | Inhoud |\n|------------------------------------|------------------------------------|\n| `SU6_20pts.laz` | Hele locatie SU6, uitgedund tot 20 punten/m² |\n| `SU6_P1_100pts.laz` | Uitsnede 100 × 100 m: kreekmonding, bosrand en hoog kronendak |\n| `SU6_P2_100pts.laz` | Uitsnede: kreek met vertakkingen en een gat in het kronendak |\n| `SU6_P3_100pts.laz` | Uitsnede: open plekken naast hoog, gesloten kronendak |\n| `SU2_…` | Locatie SU2, zelfde opbouw |\n| `Coronie_T1_20pts.laz`, `Coronie_T2_20pts.laz` | Twee transecten in Coronie (2024), 20 punten/m² |\n| `Coronie2024_field_plot_data.csv` | Veldplots van die transecten, met biomassa |\n\nDe drone mat honderden punten per m². Dat is te zwaar voor een laptop, daarom werken we met uitgedunde versies. Werk in deel 1 en 2 met de locatie die je zelf bezocht hebt: verander bovenaan de bestandsnamen.\n\n\n::: {.cell}\n\n```{.r .cell-code}\nlist.files(\"data\")\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] \"Coronie_T1_20pts.laz\"            \"Coronie_T2_20pts.laz\"           \n[3] \"Coronie2024_field_plot_data.csv\" \"SU6_20pts.laz\"                  \n[5] \"SU6_P1_100pts.laz\"               \"SU6_P2_100pts.laz\"              \n[7] \"SU6_P3_100pts.laz\"              \n```\n\n\n:::\n:::\n\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

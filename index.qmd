@@ -1,0 +1,44 @@
+---
+title: "Welkom"
+subtitle: "Drone-LiDAR verwerken met lidR"
+editor: visual
+---
+
+We verwerken de puntenwolken van de drone (DJI Matrice 350 RTK met Zenmuse L2) met het R-pakket **lidR**. Je hoeft geen R te kennen: alle code staat klaar. Alle functies komen uit lidR of **terra** (kaarten), zodat je na de cursus met dezelfde code verder kunt.
+
+| Deel | Wat je doet |
+|------------------------------------|------------------------------------|
+| 1 · Bekijken | De puntenwolk inlezen en in 3D bekijken |
+| 2 · Analyseren | Terrein, kronendak, kenmerken en bomen uit de puntenwolk halen |
+| 3 · Biomassa | Met veldplots een biomassakaart maken |
+
+## Zo werk je
+
+Rechtsboven elk grijs codeblok staan twee knopjes:
+
+-   **▶** voert het codeblok uit. Het resultaat verschijnt eronder.
+-   **▼ met een streepje** voert alle codeblokken erboven uit, handig als je iets overgeslagen hebt.
+
+Werk van boven naar onder. Loopt het mis: *Session → Restart R* en daarna **▼**.
+
+3D-figuren openen in een apart venster: draaien met de linkermuisknop, zoomen met het scrollwiel.
+
+## De data
+
+Alle bestanden staan in de map `data`:
+
+| Bestand | Inhoud |
+|------------------------------------|------------------------------------|
+| `SU6_20pts.laz` | Hele locatie SU6, uitgedund tot 20 punten/m² |
+| `SU6_P1_100pts.laz` | Uitsnede 100 × 100 m: kreekmonding, bosrand en hoog kronendak |
+| `SU6_P2_100pts.laz` | Uitsnede: kreek met vertakkingen en een gat in het kronendak |
+| `SU6_P3_100pts.laz` | Uitsnede: open plekken naast hoog, gesloten kronendak |
+| `SU2_…` | Locatie SU2, zelfde opbouw |
+| `Coronie_T1_20pts.laz`, `Coronie_T2_20pts.laz` | Twee transecten in Coronie (2024), 20 punten/m² |
+| `Coronie2024_field_plot_data.csv` | Veldplots van die transecten, met biomassa |
+
+De drone mat honderden punten per m². Dat is te zwaar voor een laptop, daarom werken we met uitgedunde versies. Werk in deel 1 en 2 met de locatie die je zelf bezocht hebt: verander bovenaan de bestandsnamen.
+
+```{r}
+list.files("data")
+```

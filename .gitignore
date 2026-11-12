@@ -1,0 +1,19 @@
+# RStudio
+.Rproj.user/
+.Rhistory
+.RData
+
+# Quarto (de website zelf staat in docs/ en gaat wél mee)
+.quarto/
+
+# Resultaten en data horen niet in de repository
+output/
+data/
+*.laz
+*.las
+*.lax
+*.tif
+*.gpkg
+
+/.quarto/
+**/*.quarto_ipynb

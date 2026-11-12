@@ -1,0 +1,157 @@
+---
+title: "2 · Informatie uit de puntenwolk"
+subtitle: "Terrein, kronendak, kenmerken en bomen met lidR"
+editor: visual
+---
+
+## Bestanden
+
+```{r}
+library(lidR)
+library(terra)
+library(sf)
+
+map              <- "data"
+bestand_locatie  <- "SU6_20pts.laz"
+bestand_uitsnede <- "SU6_P1_100pts.laz"
+
+las <- readLAS(files = file.path(map, bestand_locatie), select = "*")
+```
+
+## Terrein (DTM)
+
+Om boomhoogtes te kennen, moeten we weten waar de grond ligt. DJI Terra heeft de grondpunten al aangeduid. `filter_ground()` houdt ze over:
+
+```{r}
+plot(filter_ground(las))
+```
+
+`rasterize_terrain()` maakt er een doorlopend terreinmodel van door driehoeken te trekken tussen de grondpunten (`tin()`):
+
+```{r, fig.height=4.5}
+dtm <- rasterize_terrain(las, res = 0.5, algorithm = tin())
+schaduw <- shade(terrain(dtm, "slope", unit = "radians"), terrain(dtm, "aspect", unit = "radians"))
+plot(schaduw, col = grey(0:100 / 100), legend = FALSE, main = "Terrein (schaduwkaart)")
+```
+
+**Wat zie je?** Grote, vlakke driehoeken: daar waren geen grondpunten (dicht kronendak, water). In mangroves is dit het zwakke punt: fouten in het DTM komen terug in de boomhoogte en de biomassa.
+
+::: callout-note
+## Zelf grondpunten zoeken
+
+Zonder classificatie zoek je de grond met `classify_ground()`, bv. `classify_ground(las, csf())`.
+:::
+
+## Normaliseren
+
+`normalize_height()` trekt de terreinhoogte af van elk punt. Z wordt dan de hoogte boven de grond.
+
+```{r}
+las <- normalize_height(las, algorithm = tin())
+plot(las)
+```
+
+## Kronendak (CHM)
+
+`rasterize_canopy()` neemt per cel het hoogste punt. Op een genormaliseerde puntenwolk is dat de vegetatiehoogte: het **kronendakhoogtemodel**.
+
+```{r, fig.height=4.5}
+chm <- rasterize_canopy(las, res = 0.25, algorithm = p2r())
+chm_pitfree <- rasterize_canopy(las, res = 0.25,
+                                algorithm = pitfree(thresholds = c(0, 5, 10, 20, 30), max_edge = c(0, 1)))
+par(mfrow = c(1, 2))
+plot(chm,         col = height.colors(50), main = "p2r")
+plot(chm_pitfree, col = height.colors(50), main = "pitfree (zonder gaten)")
+par(mfrow = c(1, 1))
+```
+
+### Voor de hele locatie
+
+Voor de hele locatie normaliseren we niet elk punt, maar rekenen we met kaarten: **CHM = DSM − DTM**. Het DSM (bovenkant van alles) maken we met `rasterize_canopy()` op de ruwe hoogtes.
+
+```{r, fig.height=6}
+las_locatie <- readLAS(files = file.path(map, bestand_locatie), select = "xyzc")
+dtm_locatie <- rasterize_terrain(las_locatie, res = 1, algorithm = tin())
+dsm_locatie <- rasterize_canopy(las_locatie, res = 1, algorithm = p2r())
+chm_locatie <- clamp(dsm_locatie - dtm_locatie, lower = 0)
+
+plot(chm_locatie, col = height.colors(50), main = "Kronendakhoogte (m)")
+```
+
+```{r, fig.height=3.5}
+hist(chm_locatie, breaks = 60, main = "Kronendakhoogte", xlab = "Hoogte (m)")
+```
+
+Kaarten bewaar je als GeoTIFF, bv. om in QGIS te openen:
+
+```{r}
+dir.create("output", showWarnings = FALSE)
+writeRaster(chm_locatie, "output/CHM_SU6_1m.tif", overwrite = TRUE)
+```
+
+## Kenmerken per cel
+
+`pixel_metrics()` berekent per cel van een raster eender welke statistiek van de punten. Je schrijft zelf welke, met `~list(...)`. Hier drie kenmerken die we in deel 3 gebruiken:
+
+- **zq95**: de hoogte waaronder 95 % van de punten ligt (kronendakhoogte)
+- **zmean**: de gemiddelde hoogte
+- **bedekking**: het percentage punten hoger dan 2 m (hoe gesloten het bos is)
+
+```{r, fig.height=4}
+kenmerken <- pixel_metrics(las, ~list(zq95      = quantile(Z, 0.95),
+                                       zmean     = mean(Z),
+                                       bedekking = 100 * mean(Z > 2)), res = 10)
+plot(kenmerken, col = hcl.colors(50, "YlGn", rev = TRUE), nc = 3)
+```
+
+lidR heeft ook een kant-en-klare set van tientallen kenmerken: `pixel_metrics(las, .stdmetrics_z, res = 10)`.
+
+## Afzonderlijke bomen
+
+Met 100 punten/m² kun je bomen herkennen. We werken op het middelste stuk van 50 × 50 m.
+
+```{r}
+x <- mean(range(las$X))
+y <- mean(range(las$Y))
+las_stuk <- clip_rectangle(las, x - 50, y - 50, x + 50, y + 50)
+chm_stuk <- rasterize_canopy(las_stuk, res = 0.25,
+                             algorithm = pitfree(thresholds = c(0, 5, 10, 20, 30), max_edge = c(0, 1)))
+```
+
+**Boomtoppen.** `locate_trees()` met `lmf()` zoekt punten die het hoogst zijn binnen een zoekvenster. Een vast venster is te klein voor grote kruinen of te groot voor kleine bomen. Daarom laten we het meegroeien met de hoogte:
+
+```{r, fig.height=5}
+venster <- function(h) { 2 + 0.2 * h }      # een boom van 20 m: venster van 6 m
+toppen <- locate_trees(las_stuk, lmf(ws = venster, hmin = 2))
+
+plot(chm_stuk, col = height.colors(50), main = paste(nrow(toppen), "boomtoppen"))
+plot(st_geometry(toppen), add = TRUE, pch = 3)
+```
+
+**Kruinen.** `segment_trees()` laat vanuit elke top een kruin groeien over het kronendak. Elk punt krijgt een boomnummer (`treeID`). `max_cr` is de grootste kruindiameter, in cellen van het CHM: 48 × 0,25 m = 12 m.
+
+```{r}
+las_stuk <- segment_trees(las_stuk, dalponte2016(chm_stuk, toppen, max_cr = 48))
+plot(filter_poi(las_stuk, !is.na(treeID)), color = "treeID")
+```
+
+**Per boom.** `crown_metrics()` geeft per boom de hoogte (`Z`) en de kruinoppervlakte:
+
+```{r, fig.height=4.5}
+kruinen <- crown_metrics(las_stuk, func = .stdtreemetrics, geom = "convex")
+plot(chm_stuk, col = height.colors(50), main = "Kruinen")
+plot(st_geometry(kruinen), add = TRUE, border = "white")
+summary(kruinen$Z)
+```
+
+::: callout-important
+## Mangroves
+
+Meerdere stammen en in elkaar overlopende kruinen maken boomherkenning in mangroves moeilijk. Vergelijk altijd met een telling in het veld.
+:::
+
+::: callout-tip
+## Probeer zelf
+
+Verander het venster in `2 + 0.1 * h` of `3 + 0.3 * h`. Hoeveel bomen vind je nu?
+:::

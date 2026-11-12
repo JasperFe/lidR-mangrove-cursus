@@ -1,0 +1,145 @@
+---
+title: "3 · Biomassa met velddata"
+subtitle: "Van veldplots en puntenwolk naar een biomassakaart"
+editor: visual
+---
+
+## Data
+
+Twee transecten in Coronie (T1 bij Perseverance, T2 bij Jenny), gevlogen in september 2024. Langs elk transect liggen cirkelvormige veldplots met een straal van 12,5 m, om de 100 m. In elke plot zijn alle bomen gemeten en is de bovengrondse biomassa berekend (**AGB**, in ton per hectare).
+
+De puntenwolken zijn al genormaliseerd (Z = hoogte boven de grond) en sterk uitgedund tot 20 punten/m².
+
+```{r}
+library(lidR)
+library(terra)
+library(sf)
+
+map           <- "data"
+bestand_T1    <- "Coronie_T1_20pts.laz"
+bestand_T2    <- "Coronie_T2_20pts.laz"
+bestand_plots <- "Coronie2024_field_plot_data.csv"
+straal        <- 12.5                    # straal van een veldplot (m)
+
+las_T1 <- readLAS(files = file.path(map, bestand_T1), select = "xyz", filter = "-drop_z_below 0")
+las_T2 <- readLAS(files = file.path(map, bestand_T2), select = "xyz", filter = "-drop_z_below 0")
+```
+
+We lezen alleen X, Y en Z in (`select = "xyz"`) en laten punten onder de grond weg (`-drop_z_below 0`).
+
+## Het idee: *area-based approach*
+
+LiDAR meet geen biomassa, maar wel hoe **hoog** en hoe **dicht** het bos is. Daarom:
+
+1.  bereken je in elke veldplot kenmerken van de puntenwolk;
+2.  zoek je het verband met de biomassa uit het veld (een model);
+3.  bereken je dezelfde kenmerken voor een raster over het hele gebied en pas je het model toe.
+
+## Veldplots
+
+```{r}
+plots <- read.csv(file.path(map, bestand_plots))
+plots <- plots[!is.na(plots$AGB), c("Plot_ID", "Transect", "X_utm21N", "Y_utm21N", "AGB")]
+plots <- st_as_sf(plots, coords = c("X_utm21N", "Y_utm21N"), crs = 32621)
+plots
+```
+
+```{r, fig.height=6}
+chm_T1 <- rasterize_canopy(las_T1, res = 2, algorithm = p2r())
+plot(chm_T1, col = height.colors(50), main = "T1: kronendakhoogte en veldplots")
+plot(st_geometry(plots), add = TRUE, pch = 21, bg = "white", cex = 1.3)
+```
+
+## Kenmerken per plot
+
+`plot_metrics()` snijdt rond elke plot een cirkel uit en berekent de kenmerken (dezelfde als in deel 2):
+
+```{r}
+kenmerken <- ~list(zq95      = quantile(Z, 0.95),
+                   zmean     = mean(Z),
+                   bedekking = 100 * mean(Z > 2))
+
+d <- rbind(plot_metrics(las_T1, kenmerken, plots[plots$Transect == "T1", ], radius = straal),
+           plot_metrics(las_T2, kenmerken, plots[plots$Transect == "T2", ], radius = straal))
+d <- st_drop_geometry(d)
+head(d)
+```
+
+```{r, fig.height=3.5}
+par(mfrow = c(1, 3))
+plot(d$zq95,      d$AGB, pch = 19, xlab = "zq95 (m)",      ylab = "AGB (t/ha)")
+plot(d$zmean,     d$AGB, pch = 19, xlab = "zmean (m)",     ylab = "AGB (t/ha)")
+plot(d$bedekking, d$AGB, pch = 19, xlab = "bedekking (%)", ylab = "AGB (t/ha)")
+par(mfrow = c(1, 1))
+```
+
+**Wat zie je?** Welk kenmerk hangt het sterkst samen met de biomassa?
+
+## Model
+
+Een eenvoudig model met zq95. Biomassa stijgt sneller dan hoogte, daarom werken we met logaritmen.
+
+```{r}
+model <- lm(log(AGB) ~ log(zq95), data = d)
+summary(model)
+```
+
+De **R²** zegt hoeveel van de verschillen in biomassa het model verklaart (0 = niets, 1 = alles).
+
+**Hoe goed voorspelt het?** We laten telkens één plot weg, maken het model met de rest en voorspellen de weggelaten plot (*leave-one-out*):
+
+```{r, fig.width=5, fig.height=5}
+d$AGB_voorspeld <- NA
+for (i in 1:nrow(d)) {
+  m <- lm(log(AGB) ~ log(zq95), data = d[-i, ])
+  d$AGB_voorspeld[i] <- exp(predict(m, d[i, ]))
+}
+
+rmse <- sqrt(mean((d$AGB - d$AGB_voorspeld)^2))
+rmse                          # gemiddelde fout (t/ha)
+100 * rmse / mean(d$AGB)      # gemiddelde fout (%)
+
+plot(d$AGB, d$AGB_voorspeld, pch = 19, col = ifelse(d$Transect == "T1", "orange", "darkgreen"),
+     xlab = "Gemeten AGB (t/ha)", ylab = "Voorspelde AGB (t/ha)")
+abline(0, 1, lty = 2)
+legend("topleft", c("T1", "T2"), pch = 19, col = c("orange", "darkgreen"), bty = "n")
+```
+
+## Biomassakaart
+
+`pixel_metrics()` berekent dezelfde kenmerken per cel. Een cel moet even groot zijn als een plot: een cirkel van 12,5 m straal is 491 m², ongeveer 22 × 22 m.
+
+```{r, fig.height=6}
+agb_T1 <- exp(predict(pixel_metrics(las_T1, kenmerken, res = 22), model))
+agb_T2 <- exp(predict(pixel_metrics(las_T2, kenmerken, res = 22), model))
+
+par(mfrow = c(1, 2))
+plot(agb_T1, col = hcl.colors(50, "YlGn", rev = TRUE), main = "AGB T1 (t/ha)")
+plot(agb_T2, col = hcl.colors(50, "YlGn", rev = TRUE), main = "AGB T2 (t/ha)")
+par(mfrow = c(1, 1))
+```
+
+```{r}
+global(agb_T1, "mean", na.rm = TRUE)     # gemiddelde AGB T1 (t/ha)
+global(agb_T2, "mean", na.rm = TRUE)     # gemiddelde AGB T2 (t/ha)
+
+dir.create("output", showWarnings = FALSE)
+writeRaster(agb_T1, "output/AGB_T1.tif", overwrite = TRUE)
+writeRaster(agb_T2, "output/AGB_T2.tif", overwrite = TRUE)
+```
+
+::: callout-important
+## Let op
+
+- Het model geldt alleen binnen het bereik van de plots.
+- De GPS-positie van een plot onder het kronendak kan ± 5 m afwijken.
+- Koolstof ≈ de helft van de biomassa.
+:::
+
+::: callout-tip
+## Probeer zelf
+
+Vervang `log(zq95)` door `log(zq95) + bedekking` (ook in de lus). Wordt de fout kleiner?
+:::
+
+*Data: Feyen et al., Coronie 2024, CC BY 4.0.*

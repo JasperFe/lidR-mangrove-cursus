@@ -1,0 +1,125 @@
+---
+title: "1 · De puntenwolk bekijken"
+subtitle: "Wat heeft de drone gemeten?"
+editor: visual
+---
+
+```{r}
+library(leaflet)    # interactieve kaarten
+library(sf)         # vectordata
+library(lidR)       # puntenwolken
+map <- "data"
+```
+
+De scanner stuurt laserpulsen naar beneden en meet hoe lang ze erover doen om terug te keren. Elk raakpunt wordt een punt met X, Y en Z. Eén puls kan meerdere dingen raken (blad, tak, grond), zodat je ook ziet wat onder het kronendak zit.
+
+## A. De hele locatie
+
+```{r}
+bestand <- "SU6_20pts.laz"
+```
+
+Het bestand bevat 15 miljoen punten. Voor een eerste overzicht is dat te veel. De `filter` van `readLAS()` houdt per vierkante meter één punt over (`-thin_with_grid 1`):
+
+```{r}
+las <- readLAS(files = file.path(map, bestand), select = "*", filter = "-thin_with_grid 1")
+las
+```
+
+Elk punt heeft een positie (X, Y in UTM zone 21N), een hoogte (Z), een klasse (2 = grond) en een kleur van de camera (R, G, B):
+
+```{r}
+head(las@data[, c("X", "Y", "Z", "Classification", "R", "G", "B")])
+```
+
+Z is nog de ruwe GPS-hoogte, niet de hoogte boven de grond. Daarom is die negatief. In deel 2 zetten we dat om.
+
+### Waar ligt de puntenwolk?
+
+`st_concave_hull()` tekent de omtrek van de puntenwolk. Die leggen we op een satellietbeeld. Op de kaart kun je zoomen en verschuiven.
+
+```{r}
+omtrek <- st_concave_hull(las)
+
+leaflet(st_transform(omtrek, 4326)) |>
+  addProviderTiles("Esri.WorldImagery") |>
+  addPolygons(color = "yellow", weight = 2, fill = FALSE)
+```
+
+`st_transform(omtrek, 4326)` zet de coördinaten om van UTM naar lengte- en breedtegraad, zoals de kaart dat verwacht.
+
+### In 3D
+
+`plot()` opent een 3D-venster. Draaien doe je met de linkermuisknop, zoomen met het scrollwiel.
+
+```{r}
+plot(las, bg = "white", axis = TRUE, legend = TRUE)
+```
+
+```{r}
+plot(las, color = "RGB")      # kleuren van de camera
+```
+
+**Wat zie je?** Zoek de kreken, de bosrand en het slik. Vergelijk met het satellietbeeld.
+
+## B. Een uitsnede in detail
+
+Nu een stuk van 100 × 100 m met alle punten: 100 punten per m², honderd keer meer dan hierboven.
+
+```{r}
+bestand <- "SU6_P3_100pts.laz"
+
+las <- readLAS(files = file.path(map, bestand), select = "*")
+las
+```
+
+Waar ligt de uitsnede? `st_bbox()` geeft het kader van de puntenwolk.
+
+```{r}
+kader <- st_as_sfc(st_bbox(las))
+
+leaflet() |>
+  addProviderTiles("Esri.WorldImagery") |>
+  addPolygons(data = st_transform(omtrek, 4326), color = "yellow", weight = 2, fill = FALSE) |>
+  addPolygons(data = st_transform(kader, 4326),  color = "red",    weight = 2, fill = FALSE)
+```
+
+```{r}
+plot(las)
+```
+
+```{r}
+plot(las, color = "RGB")
+```
+
+**Wat zie je?** Nu worden kruinen, stammen en kleine bomen zichtbaar. Meer punten krijg je door lager of trager te vliegen, of met meer overlap. Dat kost vliegtijd, batterijen en opslag.
+
+### Grond en vegetatie
+
+```{r}
+plot(las, color = "Classification")
+```
+
+**Wat zie je?** De grondpunten (klasse 2) liggen onderaan. Onder het dichte kronendak zijn ze schaars: weinig pulsen komen tot op de bodem. Dat wordt belangrijk in deel 2.
+
+### Dwarsdoorsnede
+
+`clip_transect()` snijdt een smalle strook uit tussen twee punten. Met `xz = TRUE` bekijk je die van opzij. We trekken de strook van west naar oost door het midden van de uitsnede.
+
+```{r, fig.height=4}
+y  <- mean(range(las$Y))
+p1 <- c(min(las$X), y)     # westrand
+p2 <- c(max(las$X), y)     # oostrand
+profiel <- clip_transect(las, p1, p2, width = 10, xz = TRUE)
+
+grond <- profiel$Classification == 2
+plot(profiel$X, profiel$Z, pch = 16, cex = 0.2, asp = 1, col = "forestgreen",
+     xlab = "Afstand (m)", ylab = "Hoogte (m)")
+points(profiel$X[grond], profiel$Z[grond], pch = 16, cex = 0.4, col = "tan4")
+```
+
+::: callout-tip
+## Probeer zelf
+
+Kies een andere uitsnede (`SU6_P2_100pts.laz` of `SU6_P3_100pts.laz`) of maak de strook breder (`width = 10`).
+:::

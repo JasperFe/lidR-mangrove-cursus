@@ -1,0 +1,48 @@
+project:
+  type: website
+  output-dir: docs
+  render:
+    - index.qmd
+    - 01_bekijken.qmd
+    - 02_lidr.qmd
+    - 03_biomassa.qmd
+
+website:
+  title: "Drone-LiDAR met lidR"
+  navbar:
+    left:
+      - href: index.qmd
+        text: "Start"
+      - href: 01_bekijken.qmd
+        text: "1 · Bekijken"
+      - href: 02_lidr.qmd
+        text: "2 · Analyseren"
+      - href: 03_biomassa.qmd
+        text: "3 · Biomassa"
+  page-footer:
+    center: "ULS-training · Q-ForestLab, Universiteit Gent"
+
+lang: nl
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-title: "Op deze pagina"
+    code-copy: true
+    code-overflow: wrap
+    fig-width: 9
+    fig-height: 5
+
+execute:
+  warning: false
+  message: false
+  freeze: auto
+
+# 3D-figuren (plot(las)) ook in de website tonen; zie .Rprofile
+knitr:
+  opts_chunk:
+    webgl: true
+    rgl.closewindows: true
+
+editor: visual
