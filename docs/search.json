@@ -81,7 +81,7 @@
     "href": "index.html#locaties",
     "title": "Welkom",
     "section": "Locaties",
-    "text": "Locaties\nGeel: de locaties die we met de drone gevlogen hebben. Oranje: de transecten in Coronie (2024) met veldplots, voor deel 3. Klik op een vlak voor meer uitleg.\n\nlibrary(leaflet)\nlibrary(sf)\n\nlocaties &lt;- st_read(\"kaart/locaties.geojson\", quiet = TRUE)\n\nleaflet(locaties) |&gt;\n  addProviderTiles(\"Esri.WorldImagery\") |&gt;\n  addPolygons(color = ifelse(locaties$soort == \"vlucht\", \"yellow\", \"orange\"),\n              weight = 2, fillOpacity = 0.15,\n              label = locaties$naam, popup = locaties$beschrijving)"
+    "text": "Locaties\nGeel: de locaties die we met de drone gevlogen hebben. Oranje: de transecten in Coronie (2024) met veldplots, voor deel 3. Zoom in om de omtrek van de puntenwolken te zien, klik op een punt voor meer uitleg.\n\nlibrary(leaflet)\nlibrary(sf)\n\nlocaties &lt;- st_read(\"kaart/locaties.geojson\", quiet = TRUE)\npunten  &lt;- locaties[st_geometry_type(locaties) == \"POINT\", ]\nvlakken &lt;- locaties[st_geometry_type(locaties) == \"POLYGON\", ]\n\nleaflet() |&gt;\n  addProviderTiles(\"Esri.WorldImagery\") |&gt;\n  addPolygons(data = vlakken, weight = 2, fillOpacity = 0.15,\n              color = ifelse(vlakken$soort == \"vlucht\", \"yellow\", \"orange\")) |&gt;\n  addCircleMarkers(data = punten, radius = 7, opacity = 1,\n                   color = ifelse(punten$soort == \"vlucht\", \"yellow\", \"orange\"),\n                   label = punten$naam, popup = punten$beschrijving)"
   },
   {
     "objectID": "index.html#zo-werk-je",

@@ -14,19 +14,23 @@ Een **eerste kennismaking** met drone-LiDAR in mangroves. We verwerken de punten
 
 ## Locaties
 
-Geel: de locaties die we met de drone gevlogen hebben. Oranje: de transecten in Coronie (2024) met veldplots, voor deel 3. Klik op een vlak voor meer uitleg.
+Geel: de locaties die we met de drone gevlogen hebben. Oranje: de transecten in Coronie (2024) met veldplots, voor deel 3. Zoom in om de omtrek van de puntenwolken te zien, klik op een punt voor meer uitleg.
 
 ```{r}
 library(leaflet)
 library(sf)
 
 locaties <- st_read("kaart/locaties.geojson", quiet = TRUE)
+punten  <- locaties[st_geometry_type(locaties) == "POINT", ]
+vlakken <- locaties[st_geometry_type(locaties) == "POLYGON", ]
 
-leaflet(locaties) |>
+leaflet() |>
   addProviderTiles("Esri.WorldImagery") |>
-  addPolygons(color = ifelse(locaties$soort == "vlucht", "yellow", "orange"),
-              weight = 2, fillOpacity = 0.15,
-              label = locaties$naam, popup = locaties$beschrijving)
+  addPolygons(data = vlakken, weight = 2, fillOpacity = 0.15,
+              color = ifelse(vlakken$soort == "vlucht", "yellow", "orange")) |>
+  addCircleMarkers(data = punten, radius = 7, opacity = 1,
+                   color = ifelse(punten$soort == "vlucht", "yellow", "orange"),
+                   label = punten$naam, popup = punten$beschrijving)
 ```
 
 ## Zo werk je
